@@ -1,0 +1,105 @@
+/* Container for the map and form */
+.map-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 20px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Title styling */
+  .map-container h2 {
+    font-size: 24px;
+    color: #333;
+    margin-bottom: 10px;
+  }
+  
+  /* Description text */
+  .map-container p {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 20px;
+  }
+  
+  /* Map container with specific height */
+  #map {
+    width: 100%;
+    height: 500px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Locations list styling */
+  .locations-list {
+    list-style: none;
+    padding: 0;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 600px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background-color: #fff;
+  }
+  
+  .locations-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .locations-list li button {
+    padding: 5px 10px;
+    background-color: #ff4d4d;
+    border: none;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 5px;
+  }
+  
+  .locations-list li button:hover {
+    background-color: #e63946;
+  }
+  
+  /* Button styles */
+  button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Route and total distance */
+  .route-info {
+    margin-top: 20px;
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .route-info ul {
+    padding: 0;
+    margin: 0;
+  }
+  
+  .route-info ul li {
+    padding: 5px;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .route-info p {
+    font-weight: bold;
+    font-size: 18px;
+    color: #007bff;
+  }
+  
