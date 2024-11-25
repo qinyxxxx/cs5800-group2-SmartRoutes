@@ -1,4 +1,3 @@
-/* Container for the map and form */
 .map-container {
     display: flex;
     flex-direction: column;
@@ -10,21 +9,18 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   }
   
-  /* Title styling */
   .map-container h2 {
     font-size: 24px;
     color: #333;
     margin-bottom: 10px;
   }
   
-  /* Description text */
   .map-container p {
     font-size: 16px;
     color: #666;
     margin-bottom: 20px;
   }
   
-  /* Map container with specific height */
   #map {
     width: 100%;
     height: 500px;
@@ -32,7 +28,6 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
   
-  /* Locations list styling */
   .locations-list {
     list-style: none;
     padding: 0;
@@ -65,7 +60,6 @@
     background-color: #e63946;
   }
   
-  /* Button styles */
   button {
     padding: 10px 20px;
     background-color: #007bff;
@@ -80,7 +74,6 @@
     background-color: #0056b3;
   }
   
-  /* Route and total distance */
   .route-info {
     margin-top: 20px;
     font-size: 16px;
