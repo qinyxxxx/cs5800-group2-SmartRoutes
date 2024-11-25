@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './Map.css'; // Import the CSS file
+import './Map.css'; 
 
 function Map() {
   const [map, setMap] = useState(null);
@@ -45,7 +45,7 @@ function Map() {
     } else {
       window.initMap();
     }
-  }, [locations]);
+  }, [locations, maxLocations]);
 
   const handleRemoveLocation = (id) => {
     setLocations(locations.filter(location => location.id !== id));
