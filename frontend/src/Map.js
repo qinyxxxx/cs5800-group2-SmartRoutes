@@ -1,125 +1,97 @@
-import React, { useState, useEffect } from 'react';
-import './Map.css'; 
+import React, { useState, useEffect, useRef } from 'react';
+import './Map.css';
 
 function Map() {
+  const [locations, setLocations] = useState(["", ""]); // 默认两个输入框
+  const mapRef = useRef(null);
   const [map, setMap] = useState(null);
-  const [locations, setLocations] = useState([]);
-  const [maxLocations] = useState(5);
-  const [route, setRoute] = useState(null); 
-  const [totalDistance, setTotalDistance] = useState(null); 
+  const [geocoder, setGeocoder] = useState(null);
 
   useEffect(() => {
-    window.initMap = () => {
-      const mapInstance = new window.google.maps.Map(document.getElementById('map'), {
-        center: { lat: 37.7749, lng: -122.4194 },
-        zoom: 10,
-        mapTypeId: 'roadmap',
-      });
-
-      setMap(mapInstance);
-
-      mapInstance.addListener('click', (event) => {
-        if (locations.length < maxLocations) {
-          const lat = event.latLng.lat();
-          const lng = event.latLng.lng();
-          const clickedLocation = { lat, lng, id: Date.now() };
-
-          setLocations((prevLocations) => [clickedLocation, ...prevLocations]);
-
-          new window.google.maps.Marker({
-            position: clickedLocation,
-            map: mapInstance,
-            title: `Location ${locations.length + 1}`,
-          });
-        } else {
-          alert(`You can only select ${maxLocations} locations.`);
-        }
-      });
-    };
-
-    if (!window.google) {
+    const loadScript = () => {
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
       script.async = true;
-      document.head.appendChild(script);
-    } else {
-      window.initMap();
-    }
-  }, [locations, maxLocations]);
+      script.defer = true;
+      document.body.appendChild(script);
+    };
 
-  const handleRemoveLocation = (id) => {
-    setLocations(locations.filter(location => location.id !== id));
-  };
-
-  const calculateShortestRoute = async () => {
-    if (locations.length < 2) {
-      alert('Please select at least two locations.');
-      return;
-    }
-
-    const locationsData = locations.map(location => ({ lat: location.lat, lng: location.lng }));
-
-    try {
-      const response = await fetch('http://127.0.0.1:5000/calculate_route', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ locations: locationsData }),
+    window.initMap = () => {
+      const mapInstance = new window.google.maps.Map(mapRef.current, {
+        center: { lat: 37.3375381, lng: -121.8897467 },
+        zoom: 15,
+        mapTypeId: 'roadmap',
       });
-      const data = await response.json();
+      setMap(mapInstance);
+      setGeocoder(new window.google.maps.Geocoder());
+    };
 
-      setRoute(data.route);
-      setTotalDistance(data.totalDistance);
+    loadScript();
+  }, []);
 
-      drawRouteOnMap(data.route);
-    } catch (error) {
-      console.error('Error calculating route:', error);
+  const handleLocationInput = (index, event) => {
+    const newLocations = [...locations];
+    newLocations[index] = event.target.value;
+    setLocations(newLocations);
+  };
+
+  const addInput = () => {
+    setLocations([...locations, ""]);
+  };
+
+  const removeInput = (index) => {
+    if (locations.length > 2) {
+      const newLocations = locations.filter((_, i) => i !== index);
+      setLocations(newLocations);
     }
   };
 
-  const drawRouteOnMap = (route) => {
-    const path = route.map(location => new window.google.maps.LatLng(location.lat, location.lng));
-
-    const routePath = new window.google.maps.Polyline({
-      path,
-      geodesic: true,
-      strokeColor: '#FF0000',
-      strokeOpacity: 1.0,
-      strokeWeight: 2,
+  const submitLocations = () => {
+    console.log("helo")
+    locations.forEach((location) => {
+      console.log("helo22")
+      if (location.trim() !== '') {
+        console.log("helo2222")
+        geocoder.geocode({ address: location }, (results, status) => {
+          if (status === 'OK') {
+            const { lat, lng } = results[0].geometry.location;
+            console.log("lat", lat())
+            console.log("lng", lng())
+            new window.google.maps.Marker({
+              position: { lat: lat(), lng: lng() },
+              map: map,
+              title: location,
+            });
+          } else {
+            alert(`Geocoding failed for: ${location} with status: ${status}`);
+          }
+        });
+      }
     });
-    routePath.setMap(map);
   };
 
   return (
     <div className="map-container">
-      <h2>Select Locations on the Map</h2>
-      <p>Click on the map to select locations. You can select up to {maxLocations} locations.</p>
-      <div id="map" />
-      
-      <h3>Locations You Picked:</h3>
-      <ul className="locations-list">
-        {locations.map((location) => (
-          <li key={location.id}>
-            {`Location ${locations.indexOf(location) + 1}: Lat: ${location.lat}, Lng: ${location.lng}`}
-            <button onClick={() => handleRemoveLocation(location.id)}>Remove</button>
-          </li>
-        ))}
-      </ul>
-
-      <button onClick={calculateShortestRoute}>Calculate</button>
-
-      {route && (
-        <div className="route-info">
-          <h3>Route:</h3>
-          <ul>
-            {route.map((location, index) => (
-              <li key={index}>{`Location ${index + 1}: Lat: ${location.lat}, Lng: ${location.lng}`}</li>
-            ))}
-          </ul>
-          <p>Total Distance: {totalDistance} km</p>
+      <h2>Enter Locations</h2>
+      {locations.map((location, index) => (
+        <div key={index} className="input-group">
+          <input
+            type="text"
+            placeholder="Enter full address"
+            value={location}
+            onChange={(e) => handleLocationInput(index, e)}
+            className="location-input"
+          />
+          {index > 1 && (
+            <button onClick={() => removeInput(index)} className="remove-btn">-</button>
+          )}
+          {index === locations.length - 1 && (
+            <button onClick={addInput} className="add-btn">+</button>
+          )}
         </div>
-      )}
+      ))}
+      <button onClick={submitLocations}>Mark Locations on Map</button>
+      <div id="map" ref={mapRef}></div>
     </div>
   );
 }
