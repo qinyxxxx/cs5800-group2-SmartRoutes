@@ -1,28 +1,39 @@
 import React, { useState, useEffect, useRef } from 'react';
-import './Map.css';
 
 function Map() {
-  const [locations, setLocations] = useState(["", ""]); // 默认两个输入框
+  const [locations, setLocations] = useState(["", ""]);
   const mapRef = useRef(null);
   const [map, setMap] = useState(null);
   const [geocoder, setGeocoder] = useState(null);
+  const directionsService = useRef(null);
+  const directionsRenderer = useRef(null);
 
   useEffect(() => {
     const loadScript = () => {
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
-      script.async = true;
-      script.defer = true;
-      document.body.appendChild(script);
+      if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = () => {
+          initMap();
+        };
+        document.body.appendChild(script);
+      } else {
+        initMap();
+      }
     };
 
-    window.initMap = () => {
+    const initMap = () => {
       const mapInstance = new window.google.maps.Map(mapRef.current, {
         center: { lat: 37.3375381, lng: -121.8897467 },
         zoom: 15,
         mapTypeId: 'roadmap',
       });
       setMap(mapInstance);
+      directionsService.current = new window.google.maps.DirectionsService();
+      directionsRenderer.current = new window.google.maps.DirectionsRenderer();
+      directionsRenderer.current.setMap(mapInstance);
       setGeocoder(new window.google.maps.Geocoder());
     };
 
@@ -46,17 +57,13 @@ function Map() {
     }
   };
 
+  // 标记位置
   const submitLocations = () => {
-    console.log("helo")
     locations.forEach((location) => {
-      console.log("helo22")
-      if (location.trim() !== '') {
-        console.log("helo2222")
+      if (location.trim() !== '' && geocoder) {
         geocoder.geocode({ address: location }, (results, status) => {
           if (status === 'OK') {
             const { lat, lng } = results[0].geometry.location;
-            console.log("lat", lat())
-            console.log("lng", lng())
             new window.google.maps.Marker({
               position: { lat: lat(), lng: lng() },
               map: map,
@@ -68,6 +75,37 @@ function Map() {
         });
       }
     });
+  };
+
+
+  const calculateRoutes = () => {
+    if (locations.length < 2) {
+      alert("Please enter at least two locations.");
+      return;
+    }
+    const waypoints = locations.slice(1, -1).map(location => ({ location, stopover: true }));
+    const origin = locations[0];
+    const destination = locations[locations.length - 1];
+
+    if (directionsService.current && directionsRenderer.current) {
+      directionsService.current.route(
+        {
+          origin,
+          destination,
+          waypoints,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (response, status) => {
+          if (status === 'OK') {
+            directionsRenderer.current.setDirections(response); // 渲染路线
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        }
+      );
+    } else {
+      console.error("DirectionsService or DirectionsRenderer is not initialized.");
+    }
   };
 
   return (
@@ -91,7 +129,8 @@ function Map() {
         </div>
       ))}
       <button onClick={submitLocations}>Mark Locations on Map</button>
-      <div id="map" ref={mapRef}></div>
+      <button onClick={calculateRoutes}>Calculate Routes</button>
+      <div id="map" ref={mapRef} style={{ height: '500px', width: '100%' }}></div>
     </div>
   );
 }
