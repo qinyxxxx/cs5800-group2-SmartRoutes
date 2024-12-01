@@ -122,6 +122,8 @@ function Map() {
     }
 
     setRouterName("Greedy TSP"); 
+    setTotalDistance(0); 
+    setTotalDuration(0); 
 
     try {
       const response = await fetch("http://localhost:5001/greedy", {
@@ -156,6 +158,8 @@ function Map() {
     }
 
     setRouterName("Kruskal TSP"); 
+    setTotalDistance(0); 
+    setTotalDuration(0); 
 
     try {
       const response = await fetch("http://localhost:5001/kruskal", {
@@ -173,9 +177,7 @@ function Map() {
       const data = await response.json();
       if (data.success) {
         const { orderedLocations, totalDistance, totalDuration } = data;
-        setTotalDistance(totalDistance);
-        setTotalDuration(totalDuration);
-        calculateTSPRoutes(orderedLocations);
+        calculateTSPRoutes(orderedLocations, totalDistance, totalDuration);
       } else {
         alert("Kruskal calculation failed: " + data.message);
       }
@@ -185,11 +187,14 @@ function Map() {
     }
   };
 
-  const calculateTSPRoutes = (orderedLocations) => {
+  const calculateTSPRoutes = (orderedLocations, totalDistance, totalDuration) => {
     if (orderedLocations.length < 2) {
       alert("Please enter at least two locations.");
       return;
     }
+
+    setTotalDistance(totalDistance);  
+    setTotalDuration(totalDuration); 
 
     const waypoints = orderedLocations.slice(1, -1).map(location => ({ location, stopover: true }));
     const origin = orderedLocations[0];
