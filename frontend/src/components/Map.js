@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
+import loadGoogleMaps from "../loadGoogleMaps";
 
 function Map() {
   const [locations, setLocations] = useState(["", ""]);
@@ -7,39 +8,31 @@ function Map() {
   const [geocoder, setGeocoder] = useState(null);
   const directionsService = useRef(null);
   const directionsRenderer = useRef(null);
-  const [routeOrder, setRouteOrder] = useState([]); // visit order
+  const [routeOrder, setRouteOrder] = useState([]);
 
   useEffect(() => {
-    const loadScript = () => {
-      if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-          initMap();
-        };
-        document.body.appendChild(script);
-      } else {
+    const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
+    loadGoogleMaps(apiKey)
+      .then(() => {
         initMap();
-      }
-    };
-
-    const initMap = () => {
-      const mapInstance = new window.google.maps.Map(mapRef.current, {
-        center: { lat: 37.3375381, lng: -121.8897467 },
-        zoom: 15,
-        mapTypeId: 'roadmap',
+      })
+      .catch((err) => {
+        console.error("Failed to load Google Maps API:", err);
       });
-      setMap(mapInstance);
-      directionsService.current = new window.google.maps.DirectionsService();
-      directionsRenderer.current = new window.google.maps.DirectionsRenderer();
-      directionsRenderer.current.setMap(mapInstance);
-      setGeocoder(new window.google.maps.Geocoder());
-    };
-
-    loadScript();
   }, []);
+
+  const initMap = () => {
+    const mapInstance = new window.google.maps.Map(mapRef.current, {
+      center: { lat: 37.3375381, lng: -121.8897467 },
+      zoom: 15,
+      mapTypeId: "roadmap",
+    });
+    setMap(mapInstance);
+    directionsService.current = new window.google.maps.DirectionsService();
+    directionsRenderer.current = new window.google.maps.DirectionsRenderer();
+    directionsRenderer.current.setMap(mapInstance);
+    setGeocoder(new window.google.maps.Geocoder());
+  };
 
   const handleLocationInput = (index, event) => {
     const newLocations = [...locations];
@@ -60,9 +53,9 @@ function Map() {
 
   const submitLocations = () => {
     locations.forEach((location) => {
-      if (location.trim() !== '' && geocoder) {
+      if (location.trim() !== "" && geocoder) {
         geocoder.geocode({ address: location }, (results, status) => {
-          if (status === 'OK') {
+          if (status === "OK") {
             const { lat, lng } = results[0].geometry.location;
             new window.google.maps.Marker({
               position: { lat: lat(), lng: lng() },
@@ -82,7 +75,7 @@ function Map() {
       alert("Please enter at least two locations.");
       return;
     }
-    const waypoints = locations.slice(1, -1).map(location => ({ location, stopover: true }));
+    const waypoints = locations.slice(1, -1).map((location) => ({ location, stopover: true }));
     const origin = locations[0];
     const destination = locations[locations.length - 1];
 
@@ -95,8 +88,8 @@ function Map() {
           travelMode: window.google.maps.TravelMode.DRIVING,
         },
         (response, status) => {
-          if (status === 'OK') {
-            directionsRenderer.current.setDirections(response); // 渲染路线
+          if (status === "OK") {
+            directionsRenderer.current.setDirections(response);
 
             const legs = response.routes[0].legs;
             const order = legs.map((leg, index) => ({
@@ -104,9 +97,9 @@ function Map() {
               start: leg.start_address,
               end: leg.end_address,
             }));
-            setRouteOrder(order); // save it to order
+            setRouteOrder(order);
           } else {
-            window.alert('Directions request failed due to ' + status);
+            window.alert("Directions request failed due to " + status);
           }
         }
       );
@@ -127,7 +120,7 @@ function Map() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ locations }), // 发送 JSON 格式数据
+        body: JSON.stringify({ locations }),
       });
 
       if (!response.ok) {
@@ -136,8 +129,8 @@ function Map() {
 
       const data = await response.json();
       if (data.success) {
-        const { orderedLocations } = data; // 从 API 返回的地址顺序
-        calculateTSPRoutes(orderedLocations); // 根据顺序调用 Google Maps API 显示路径
+        const { orderedLocations } = data;
+        calculateTSPRoutes(orderedLocations);
       } else {
         alert("TSP calculation failed: " + data.message);
       }
@@ -196,21 +189,24 @@ function Map() {
                   className="location-input"
               />
               {index > 1 && (
-                  <button onClick={() => removeInput(index)} className="remove-btn">-</button>
+                  <button onClick={() => removeInput(index)} className="remove-btn">
+                    -
+                  </button>
               )}
               {index === locations.length - 1 && (
-                  <button onClick={addInput} className="add-btn">+</button>
+                  <button onClick={addInput} className="add-btn">
+                    +
+                  </button>
               )}
             </div>
         ))}
         {/*<button onClick={submitLocations}>Mark Locations on Map</button>*/}
         <br/>
-        <button onClick={calculateRoutes}>Calculate Routes</button>
-        <br/>
-        <button onClick={fetchTSPRoute}>Greedy TSP Route</button>
-        <div id="map" ref={mapRef} style={{height: '500px', width: '100%'}}></div>
+        {/*<button onClick={calculateRoutes}>Calculate Routes</button>*/}
+        <button onClick={fetchTSPRoute}>Greedy TSP</button>
+        <div id="map" ref={mapRef} style={{height: "500px", width: "100%"}}></div>
 
-        {/* show the order */}
+        {/* 显示访问顺序 */}
         {routeOrder.length > 0 && (
             <div className="route-order">
               <h3>Route Order:</h3>
