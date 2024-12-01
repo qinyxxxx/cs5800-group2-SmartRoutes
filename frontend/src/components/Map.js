@@ -116,7 +116,7 @@ function Map() {
     }
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/greedy", {
+      const response = await fetch("http://localhost:5001/greedy", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -138,6 +138,38 @@ function Map() {
     } catch (error) {
       console.error("Error fetching TSP route:", error);
       alert("Error fetching TSP route. Please try again.");
+    }
+  };
+
+  const fetchKruskalRoute = async () => {
+    if (locations.length < 2) {
+      alert("Please enter at least two locations.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://localhost:5001/kruskal", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ locations }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch Kruskal route from API");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        const { orderedLocations } = data;
+        calculateTSPRoutes(orderedLocations);
+      } else {
+        alert("Kruskal calculation failed: " + data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching Kruskal route:", error);
+      alert("Error fetching Kruskal route. Please try again.");
     }
   };
 
@@ -204,7 +236,11 @@ function Map() {
         {/*<button onClick={submitLocations}>Mark Locations on Map</button>*/}
         <br/>
         {/*<button onClick={calculateRoutes}>Calculate Routes</button>*/}
-        <button onClick={fetchTSPRouteGreedy}>Greedy TSP</button>
+        <div className="button-container">
+          <button onClick={fetchTSPRouteGreedy}>Greedy TSP</button>
+          <button onClick={fetchKruskalRoute}>Kruskal TSP</button>
+        </div>
+
         <div id="map" ref={mapRef} style={{height: "500px", width: "100%"}}></div>
 
         {routeOrder.length > 0 && (
