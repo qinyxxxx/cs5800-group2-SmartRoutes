@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
-import Map from './Map';
+import Map from './components/Map';
 
 function App() {
   const [coordinates] = useState({ latitude: 37.3382, longitude: -121.8863 });
