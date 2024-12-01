@@ -109,7 +109,7 @@ function Map() {
     }
   };
 
-  const fetchTSPRoute = async () => {
+  const fetchTSPRouteGreedy = async () => {
     if (locations.length < 2) {
       alert("Please enter at least two locations.");
       return;
@@ -161,14 +161,14 @@ function Map() {
         },
         (response, status) => {
           if (status === 'OK') {
-            directionsRenderer.current.setDirections(response); // 渲染路线
+            directionsRenderer.current.setDirections(response);
             const legs = response.routes[0].legs;
             const order = legs.map((leg, index) => ({
               step: index + 1,
               start: leg.start_address,
               end: leg.end_address,
             }));
-            setRouteOrder(order); // 更新路线顺序
+            setRouteOrder(order);
           } else {
             window.alert('Directions request failed due to ' + status);
           }
@@ -204,7 +204,7 @@ function Map() {
         {/*<button onClick={submitLocations}>Mark Locations on Map</button>*/}
         <br/>
         {/*<button onClick={calculateRoutes}>Calculate Routes</button>*/}
-        <button onClick={fetchTSPRoute}>Greedy TSP</button>
+        <button onClick={fetchTSPRouteGreedy}>Greedy TSP</button>
         <div id="map" ref={mapRef} style={{height: "500px", width: "100%"}}></div>
 
         {routeOrder.length > 0 && (
