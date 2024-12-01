@@ -23,12 +23,28 @@ def get_distance_matrix(locations):
         "destinations": "|".join(locations),
         "key": GOOGLE_MAPS_API_KEY,
     }
-    response = requests.get(url, params=params)
+    
+    print("Sending request to API with parameters:", params)
+
+    try:
+        response = requests.get(url, params=params, timeout=10)  # Adding timeout
+        response.raise_for_status()  # Check if the response status is not 4xx or 5xx
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
+        raise
+
+    print("Response Status Code:", response.status_code)
+    print("Response Text:", response.text)
+
     if response.status_code == 200:
         data = response.json()
-        return data["rows"]
+
+        if "rows" in data:
+            return data["rows"]
+        else:
+            raise Exception("Invalid response format, 'rows' not found.")
     else:
-        raise Exception("Failed to fetch distance matrix from Google Maps API")
+        raise Exception(f"Failed to fetch distance matrix from Google Maps API. Status Code: {response.status_code}")
 
 
 def solve_tsp_greedy(distances):
@@ -131,7 +147,7 @@ def kruskal_mst(distances):
     return mst
 
 
-def dfs_tsp(mst, start):
+def krustral_tsp(mst, start):
     visited = set()
     path = []
 
@@ -151,19 +167,63 @@ def calculate_tsp_kruskal():
     try:
         data = request.get_json()
         locations = data.get("locations")
+
+        if FIX_START not in locations:
+            locations.insert(0, FIX_START)
+
         if not locations or len(locations) < 2:
             return jsonify({"success": False, "message": "At least two locations are required"})
 
         distance_matrix = get_distance_matrix(locations)
+
         distances = [[row["elements"][i]["distance"]["value"] for i in range(len(row["elements"]))] for row in distance_matrix]
+        durations = [[row["elements"][i]["duration"]["value"] for i in range(len(row["elements"]))] for row in distance_matrix]
+
+        print("Distances:", distances)
+        print("Durations:", durations)
 
         mst = kruskal_mst(distances)
-        tsp_order = dfs_tsp(mst, 0)
+
+        # Get path order
+        tsp_order = krustral_tsp(mst, 0)
+
+        # Transfer to the location order
         ordered_locations = [locations[i] for i in tsp_order]
 
-        return jsonify({"success": True, "orderedLocations": ordered_locations})
+        total_distance = sum(
+            distances[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
+        )
+
+        total_duration = sum(
+            durations[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
+        )
+
+        print("Total distance:", total_distance)
+        print("Total duration:", total_duration)
+
+        travel_details = []
+        for i in range(len(tsp_order) - 1):
+            start_location = ordered_locations[i]
+            end_location = ordered_locations[i + 1]
+            distance = distances[tsp_order[i]][tsp_order[i + 1]]
+            duration = durations[tsp_order[i]][tsp_order[i + 1]]
+            travel_details.append({
+                "from": start_location,
+                "to": end_location,
+                "distance": distance,
+                "duration": duration
+            })
+
+        return jsonify({
+            "success": True,
+            "orderedLocations": ordered_locations,
+            "totalDistance": total_distance,
+            "totalDuration": total_duration
+        })
+
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001) 

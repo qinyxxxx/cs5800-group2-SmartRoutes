@@ -8,11 +8,15 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Welcome to My Simple React Website</h1>
-        <p>This is a basic React app created using Create React App.</p>
+        <h1>Welcome to Smart Routes</h1>
+        <p>Designed by: Yuxin Qin, Yanlu He, Xiangying Sun</p>
       </header>
 
       <Map latitude={coordinates.latitude} longitude={coordinates.longitude} />
+
+      <footer className="App-footer">
+        <p>© Smart Routes Team</p>
+      </footer>
 
     </div>
   );

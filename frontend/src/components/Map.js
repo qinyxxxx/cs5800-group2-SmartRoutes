@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import loadGoogleMaps from "../loadGoogleMaps";
 import "../Map.css";
 
+const FIX_START = "4 N 2nd St Suite 150, San Jose, CA 95113";
+
 function Map() {
   const [locations, setLocations] = useState(["", ""]);
   const mapRef = useRef(null);
@@ -10,6 +12,10 @@ function Map() {
   const directionsService = useRef(null);
   const directionsRenderer = useRef(null);
   const [routeOrder, setRouteOrder] = useState([]);
+  const [routerName, setRouterName] = useState("");
+
+  const [totalDistance, setTotalDistance] = useState(0);
+  const [totalDuration, setTotalDuration] = useState(0);
 
   useEffect(() => {
     const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -71,49 +77,51 @@ function Map() {
     });
   };
 
-  const calculateRoutes = () => {
-    if (locations.length < 2) {
-      alert("Please enter at least two locations.");
-      return;
-    }
-    const waypoints = locations.slice(1, -1).map((location) => ({ location, stopover: true }));
-    const origin = locations[0];
-    const destination = locations[locations.length - 1];
+  // const calculateRoutes = () => {
+  //   if (locations.length < 2) {
+  //     alert("Please enter at least two locations.");
+  //     return;
+  //   }
+  //   const waypoints = locations.slice(1, -1).map((location) => ({ location, stopover: true }));
+  //   const origin = locations[0];
+  //   const destination = locations[locations.length - 1];
 
-    if (directionsService.current && directionsRenderer.current) {
-      directionsService.current.route(
-        {
-          origin,
-          destination,
-          waypoints,
-          travelMode: window.google.maps.TravelMode.DRIVING,
-        },
-        (response, status) => {
-          if (status === "OK") {
-            directionsRenderer.current.setDirections(response);
+  //   if (directionsService.current && directionsRenderer.current) {
+  //     directionsService.current.route(
+  //       {
+  //         origin,
+  //         destination,
+  //         waypoints,
+  //         travelMode: window.google.maps.TravelMode.DRIVING,
+  //       },
+  //       (response, status) => {
+  //         if (status === "OK") {
+  //           directionsRenderer.current.setDirections(response);
 
-            const legs = response.routes[0].legs;
-            const order = legs.map((leg, index) => ({
-              step: index + 1,
-              start: leg.start_address,
-              end: leg.end_address,
-            }));
-            setRouteOrder(order);
-          } else {
-            window.alert("Directions request failed due to " + status);
-          }
-        }
-      );
-    } else {
-      console.error("DirectionsService or DirectionsRenderer is not initialized.");
-    }
-  };
+  //           const legs = response.routes[0].legs;
+  //           const order = legs.map((leg, index) => ({
+  //             step: index + 1,
+  //             start: leg.start_address,
+  //             end: leg.end_address,
+  //           }));
+  //           setRouteOrder(order);
+  //         } else {
+  //           window.alert("Directions request failed due to " + status);
+  //         }
+  //       }
+  //     );
+  //   } else {
+  //     console.error("DirectionsService or DirectionsRenderer is not initialized.");
+  //   }
+  // };
 
   const fetchTSPRouteGreedy = async () => {
     if (locations.length < 2) {
       alert("Please enter at least two locations.");
       return;
     }
+
+    setRouterName("Greedy TSP"); 
 
     try {
       const response = await fetch("http://localhost:5001/greedy", {
@@ -147,6 +155,8 @@ function Map() {
       return;
     }
 
+    setRouterName("Kruskal TSP"); 
+
     try {
       const response = await fetch("http://localhost:5001/kruskal", {
         method: "POST",
@@ -162,7 +172,9 @@ function Map() {
 
       const data = await response.json();
       if (data.success) {
-        const { orderedLocations } = data;
+        const { orderedLocations, totalDistance, totalDuration } = data;
+        setTotalDistance(totalDistance);
+        setTotalDuration(totalDuration);
         calculateTSPRoutes(orderedLocations);
       } else {
         alert("Kruskal calculation failed: " + data.message);
@@ -209,9 +221,14 @@ function Map() {
     }
   };
 
+  
   return (
       <div className="map-container">
-        <h2>Enter Locations</h2>
+        <h2>Route Planner</h2>
+        <div>
+          <h3>You will start from: {FIX_START}</h3>
+        </div>
+        <h3>Enter other Locations</h3>
         {locations.map((location, index) => (
             <div key={index} className="input-group">
               <input
@@ -245,16 +262,18 @@ function Map() {
 
         {routeOrder.length > 0 && (
             <div className="route-order">
-              <h3>Route Order:</h3>
-              <ol>
+              <h3>{routerName ? `Route Order: (${routerName})` : "Route Order:"}</h3>
                 {routeOrder.map(({step, start, end}) => (
                     <li key={step}>
                       <strong>Step {step}:</strong> {start} → {end}
                     </li>
                 ))}
-              </ol>
             </div>
         )}
+        <div>
+          <h3>Total Distance: {(totalDistance / 1000).toFixed(2)} KM</h3>
+          <h3>Total Duration: {(totalDuration / 60).toFixed(2)} Mins</h3>
+      </div>
       </div>
   );
 }
