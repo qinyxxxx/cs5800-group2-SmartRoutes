@@ -1,98 +1,56 @@
 .map-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 20px;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .map-container h2 {
-    font-size: 24px;
-    color: #333;
-    margin-bottom: 10px;
-  }
-  
-  .map-container p {
-    font-size: 16px;
-    color: #666;
-    margin-bottom: 20px;
-  }
-  
-  #map {
-    width: 100%;
-    height: 500px;
-    border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-  
-  .locations-list {
-    list-style: none;
-    padding: 0;
-    margin: 20px 0;
-    width: 100%;
-    max-width: 600px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    background-color: #fff;
-  }
-  
-  .locations-list li {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .locations-list li button {
-    padding: 5px 10px;
-    background-color: #ff4d4d;
-    border: none;
-    color: white;
-    cursor: pointer;
-    font-size: 14px;
-    border-radius: 5px;
-  }
-  
-  .locations-list li button:hover {
-    background-color: #e63946;
-  }
-  
-  button {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-  
-  button:hover {
-    background-color: #0056b3;
-  }
-  
-  .route-info {
-    margin-top: 20px;
-    font-size: 16px;
-    color: #333;
-  }
-  
-  .route-info ul {
-    padding: 0;
-    margin: 0;
-  }
-  
-  .route-info ul li {
-    padding: 5px;
-    border-bottom: 1px solid #ddd;
-  }
-  
-  .route-info p {
-    font-weight: bold;
-    font-size: 18px;
-    color: #007bff;
-  }
-  
+  width: 80%;
+  margin: 20px auto;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  background-color: #fff;
+}
+
+.input-group {
+  display: flex;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.location-input {
+  flex-grow: 1;
+  margin-right: 8px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.add-btn, .remove-btn {
+  padding: 8px 12px;
+  border: none;
+  background-color: #007BFF;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 4px;
+}
+
+.add-btn:hover, .remove-btn:hover {
+  background-color: #0056b3;
+}
+
+button {
+  padding: 8px 16px;
+  border: none;
+  background-color: #28a745;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 20px;
+}
+
+button:hover {
+  background-color: #218838;
+}
+
+#map {
+  height: 500px;
+  width: 100%;
+  margin-top: 20px;
+}
