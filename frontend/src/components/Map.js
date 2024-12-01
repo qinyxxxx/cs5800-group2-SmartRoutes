@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import loadGoogleMaps from "../loadGoogleMaps";
+import "../Map.css";
 
 function Map() {
   const [locations, setLocations] = useState(["", ""]);
@@ -206,7 +207,6 @@ function Map() {
         <button onClick={fetchTSPRoute}>Greedy TSP</button>
         <div id="map" ref={mapRef} style={{height: "500px", width: "100%"}}></div>
 
-        {/* 显示访问顺序 */}
         {routeOrder.length > 0 && (
             <div className="route-order">
               <h3>Route Order:</h3>
