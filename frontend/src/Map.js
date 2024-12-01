@@ -7,6 +7,7 @@ function Map() {
   const [geocoder, setGeocoder] = useState(null);
   const directionsService = useRef(null);
   const directionsRenderer = useRef(null);
+  const [routeOrder, setRouteOrder] = useState([]); // visit order
 
   useEffect(() => {
     const loadScript = () => {
@@ -57,7 +58,6 @@ function Map() {
     }
   };
 
-  // 标记位置
   const submitLocations = () => {
     locations.forEach((location) => {
       if (location.trim() !== '' && geocoder) {
@@ -76,7 +76,6 @@ function Map() {
       }
     });
   };
-
 
   const calculateRoutes = () => {
     if (locations.length < 2) {
@@ -98,6 +97,14 @@ function Map() {
         (response, status) => {
           if (status === 'OK') {
             directionsRenderer.current.setDirections(response); // 渲染路线
+
+            const legs = response.routes[0].legs;
+            const order = legs.map((leg, index) => ({
+              step: index + 1,
+              start: leg.start_address,
+              end: leg.end_address,
+            }));
+            setRouteOrder(order); // save it to order
           } else {
             window.alert('Directions request failed due to ' + status);
           }
@@ -108,30 +115,115 @@ function Map() {
     }
   };
 
+  const fetchTSPRoute = async () => {
+    if (locations.length < 2) {
+      alert("Please enter at least two locations.");
+      return;
+    }
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/greedy", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ locations }), // 发送 JSON 格式数据
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch TSP route from API");
+      }
+
+      const data = await response.json();
+      if (data.success) {
+        const { orderedLocations } = data; // 从 API 返回的地址顺序
+        calculateTSPRoutes(orderedLocations); // 根据顺序调用 Google Maps API 显示路径
+      } else {
+        alert("TSP calculation failed: " + data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching TSP route:", error);
+      alert("Error fetching TSP route. Please try again.");
+    }
+  };
+
+  const calculateTSPRoutes = (orderedLocations) => {
+    if (orderedLocations.length < 2) {
+      alert("Please enter at least two locations.");
+      return;
+    }
+
+    const waypoints = orderedLocations.slice(1, -1).map(location => ({ location, stopover: true }));
+    const origin = orderedLocations[0];
+    const destination = orderedLocations[orderedLocations.length - 1];
+
+    if (directionsService.current && directionsRenderer.current) {
+      directionsService.current.route(
+        {
+          origin,
+          destination,
+          waypoints,
+          travelMode: window.google.maps.TravelMode.DRIVING,
+        },
+        (response, status) => {
+          if (status === 'OK') {
+            directionsRenderer.current.setDirections(response); // 渲染路线
+            const legs = response.routes[0].legs;
+            const order = legs.map((leg, index) => ({
+              step: index + 1,
+              start: leg.start_address,
+              end: leg.end_address,
+            }));
+            setRouteOrder(order); // 更新路线顺序
+          } else {
+            window.alert('Directions request failed due to ' + status);
+          }
+        }
+      );
+    }
+  };
+
   return (
-    <div className="map-container">
-      <h2>Enter Locations</h2>
-      {locations.map((location, index) => (
-        <div key={index} className="input-group">
-          <input
-            type="text"
-            placeholder="Enter full address"
-            value={location}
-            onChange={(e) => handleLocationInput(index, e)}
-            className="location-input"
-          />
-          {index > 1 && (
-            <button onClick={() => removeInput(index)} className="remove-btn">-</button>
-          )}
-          {index === locations.length - 1 && (
-            <button onClick={addInput} className="add-btn">+</button>
-          )}
-        </div>
-      ))}
-      <button onClick={submitLocations}>Mark Locations on Map</button>
-      <button onClick={calculateRoutes}>Calculate Routes</button>
-      <div id="map" ref={mapRef} style={{ height: '500px', width: '100%' }}></div>
-    </div>
+      <div className="map-container">
+        <h2>Enter Locations</h2>
+        {locations.map((location, index) => (
+            <div key={index} className="input-group">
+              <input
+                  type="text"
+                  placeholder="Enter full address"
+                  value={location}
+                  onChange={(e) => handleLocationInput(index, e)}
+                  className="location-input"
+              />
+              {index > 1 && (
+                  <button onClick={() => removeInput(index)} className="remove-btn">-</button>
+              )}
+              {index === locations.length - 1 && (
+                  <button onClick={addInput} className="add-btn">+</button>
+              )}
+            </div>
+        ))}
+        {/*<button onClick={submitLocations}>Mark Locations on Map</button>*/}
+        <br/>
+        <button onClick={calculateRoutes}>Calculate Routes</button>
+        <br/>
+        <button onClick={fetchTSPRoute}>Greedy TSP Route</button>
+        <div id="map" ref={mapRef} style={{height: '500px', width: '100%'}}></div>
+
+        {/* show the order */}
+        {routeOrder.length > 0 && (
+            <div className="route-order">
+              <h3>Route Order:</h3>
+              <ol>
+                {routeOrder.map(({step, start, end}) => (
+                    <li key={step}>
+                      <strong>Step {step}:</strong> {start} → {end}
+                    </li>
+                ))}
+              </ol>
+            </div>
+        )}
+      </div>
   );
 }
 
