@@ -263,7 +263,7 @@ def prim_tsp(mst, start):
                 dfs(neighbor)
 
     dfs(start)
-    path.append(start)  # Return to the start node to complete the tour
+    path.append(start)  # Return to the starting point
     return path
 
 @app.route("/prim", methods=["POST"])
@@ -303,12 +303,10 @@ def calculate_tsp_prim():
         total_distance = sum(
             distances[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
         )
-        total_distance += distances[tsp_order[-1]][tsp_order[0]]  # Return to the starting point
 
         total_duration = sum(
             durations[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
         )
-        total_duration += durations[tsp_order[-1]][tsp_order[0]]
 
         return jsonify({
             "success": True,
