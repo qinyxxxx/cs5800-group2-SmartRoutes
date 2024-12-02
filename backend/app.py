@@ -4,6 +4,7 @@ import requests
 import os
 from dotenv import load_dotenv
 from collections import defaultdict
+import heapq
 
 
 load_dotenv()
@@ -65,12 +66,14 @@ def solve_tsp_greedy(distances):
 
     path.append(0)  # back to the start point
     return path
+
 @app.route("/greedy", methods=["POST"])
 def calculate_tsp():
     try:
         data = request.get_json()
         locations = data.get("locations")
 
+        # FIX_START = "4 N 2nd St Suite 150, San Jose, CA 95113"
         if FIX_START not in locations:
             locations.insert(0, FIX_START)
 
@@ -78,14 +81,8 @@ def calculate_tsp():
             return jsonify({"success": False, "message": "At least two locations are required"})
 
         distance_matrix = get_distance_matrix(locations)
-
         distances = [
             [row["elements"][i]["distance"]["value"] for i in range(len(row["elements"]))]
-            for row in distance_matrix
-        ]
-
-        durations = [
-            [row["elements"][i]["duration"]["value"] for i in range(len(row["elements"]))]
             for row in distance_matrix
         ]
 
@@ -98,31 +95,12 @@ def calculate_tsp():
             distances[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
         )
 
-        total_duration = sum(
-            durations[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
-        )
-
         ordered_locations = [locations[i] for i in tsp_order]
-
-        travel_details = []
-        for i in range(len(tsp_order) - 1):
-            start_location = ordered_locations[i]
-            end_location = ordered_locations[i + 1]
-            distance = distances[tsp_order[i]][tsp_order[i + 1]]
-            duration = durations[tsp_order[i]][tsp_order[i + 1]]
-            travel_details.append({
-                "from": start_location,
-                "to": end_location,
-                "distance": distance,
-                "duration": duration
-            })
 
         return jsonify({
             "success": True,
             "orderedLocations": ordered_locations,
-            "totalDistance": total_distance,
-            "totalDuration": total_duration,
-            "travelDetails": travel_details
+            "totalDistance": total_distance
         })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
@@ -236,6 +214,101 @@ def calculate_tsp_kruskal():
                 "distance": distance,
                 "duration": duration
             })
+
+        return jsonify({
+            "success": True,
+            "orderedLocations": ordered_locations,
+            "totalDistance": total_distance,
+            "totalDuration": total_duration
+        })
+
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)})
+
+
+#Prim's TSP algorithm
+def prim_mst(distances):
+    n = len(distances)
+    # To store the MST
+    mst = defaultdict(list)
+    visited = [False] * n
+    min_heap = [(0, 0)]  # (weight, node), starting from node 0
+
+    while min_heap:
+        weight, u = heapq.heappop(min_heap)
+
+        if visited[u]:
+            continue
+        visited[u] = True
+
+        # Add the selected node to the MST
+        for v in range(n):
+            if not visited[v] and distances[u][v] > 0:  # Avoid self-loops
+                heapq.heappush(min_heap, (distances[u][v], v))
+                mst[u].append(v)
+                mst[v].append(u)
+
+    return mst
+
+# Prim's TSP path reconstruction (using DFS to visit all nodes)
+def prim_tsp(mst, start):
+    visited = set()
+    path = []
+
+    def dfs(node):
+        visited.add(node)
+        path.append(node)
+        for neighbor in mst[node]:
+            if neighbor not in visited:
+                dfs(neighbor)
+
+    dfs(start)
+    path.append(start)  # Return to the start node to complete the tour
+    return path
+
+@app.route("/prim", methods=["POST"])
+def calculate_tsp_prim():
+    try:
+        data = request.get_json()
+        locations = data.get("locations")
+
+        if FIX_START not in locations:
+            locations.insert(0, FIX_START)
+
+        if not locations or len(locations) < 2:
+            return jsonify({"success": False, "message": "At least two locations are required"})
+
+        distance_matrix = get_distance_matrix(locations)
+
+        # Calculate the distances matrix from the distance matrix response
+        distances = [
+            [row["elements"][i]["distance"]["value"] for i in range(len(row["elements"]))]
+            for row in distance_matrix
+        ]
+        durations = [
+            [row["elements"][i]["duration"]["value"] for i in range(len(row["elements"]))]
+            for row in distance_matrix
+        ]
+
+        # Apply Prim's Algorithm to find the MST
+        mst = prim_mst(distances)
+
+        # Get the TSP path using DFS on the MST
+        tsp_order = prim_tsp(mst, 0)
+
+        # Convert the path order to the corresponding locations
+        ordered_locations = [locations[i] for i in tsp_order]
+
+        # Calculate total distance
+        total_distance = sum(
+            distances[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
+        )
+        total_distance += distances[tsp_order[-1]][tsp_order[0]]  # Return to the starting point
+
+        total_duration = sum(
+            durations[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
+        )
+        total_duration += durations[tsp_order[-1]][tsp_order[0]]
 
         return jsonify({
             "success": True,

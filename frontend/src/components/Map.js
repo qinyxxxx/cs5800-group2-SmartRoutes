@@ -167,8 +167,8 @@ function Map() {
 
       const data = await response.json();
       if (data.success) {
-        const { orderedLocations, totalDistance, totalDuration } = data;
-        calculateTSPRoutes(orderedLocations, totalDistance, totalDuration);
+        const { orderedLocations } = data;
+        calculateTSPRoutes(orderedLocations);
       } else {
         alert("TSP calculation failed: " + data.message);
       }
@@ -213,6 +213,42 @@ function Map() {
       alert("Error fetching Kruskal route. Please try again.");
     }
   };
+
+  const fetchPrimRoute = async () => {
+  if (locations.length < 2) {
+    alert("Please enter at least two locations.");
+    return;
+  }
+
+  setRouterName("Prim's TSP");
+  setTotalDistance(0);
+  setTotalDuration(0);
+
+  try {
+    const response = await fetch("http://localhost:5001/prim", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ locations }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch Prim's route from API");
+    }
+
+    const data = await response.json();
+    if (data.success) {
+      const { orderedLocations, totalDistance, totalDuration } = data;
+      calculateTSPRoutes(orderedLocations, totalDistance, totalDuration);
+    } else {
+      alert("Prim's calculation failed: " + data.message);
+    }
+  } catch (error) {
+    console.error("Error fetching Prim's route:", error);
+    alert("Error fetching Prim's route. Please try again.");
+  }
+};
 
   const calculateTSPRoutes = (orderedLocations, totalDistance, totalDuration) => {
     if (orderedLocations.length < 2) {
@@ -302,6 +338,7 @@ function Map() {
         <div className="button-container">
           <button onClick={fetchTSPRouteGreedy}>Greedy TSP</button>
           <button onClick={fetchKruskalRoute}>Kruskal TSP</button>
+          <button onClick={fetchPrimRoute}>Prim's TSP</button>
         </div>
 
         <div id="map" ref={mapRef} style={{height: "500px", width: "100%"}}></div>
