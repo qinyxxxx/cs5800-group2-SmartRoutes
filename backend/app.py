@@ -72,8 +72,6 @@ def calculate_tsp():
     try:
         data = request.get_json()
         locations = data.get("locations")
-
-        # FIX_START = "4 N 2nd St Suite 150, San Jose, CA 95113"
         if FIX_START not in locations:
             locations.insert(0, FIX_START)
 
@@ -81,8 +79,14 @@ def calculate_tsp():
             return jsonify({"success": False, "message": "At least two locations are required"})
 
         distance_matrix = get_distance_matrix(locations)
+
         distances = [
             [row["elements"][i]["distance"]["value"] for i in range(len(row["elements"]))]
+            for row in distance_matrix
+        ]
+
+        durations = [
+            [row["elements"][i]["duration"]["value"] for i in range(len(row["elements"]))]
             for row in distance_matrix
         ]
 
@@ -95,12 +99,31 @@ def calculate_tsp():
             distances[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
         )
 
+        total_duration = sum(
+            durations[tsp_order[i]][tsp_order[i + 1]] for i in range(len(tsp_order) - 1)
+        )
+
         ordered_locations = [locations[i] for i in tsp_order]
+
+        travel_details = []
+        for i in range(len(tsp_order) - 1):
+            start_location = ordered_locations[i]
+            end_location = ordered_locations[i + 1]
+            distance = distances[tsp_order[i]][tsp_order[i + 1]]
+            duration = durations[tsp_order[i]][tsp_order[i + 1]]
+            travel_details.append({
+                "from": start_location,
+                "to": end_location,
+                "distance": distance,
+                "duration": duration
+            })
 
         return jsonify({
             "success": True,
             "orderedLocations": ordered_locations,
-            "totalDistance": total_distance
+            "totalDistance": total_distance,
+            "totalDuration": total_duration,
+            "travelDetails": travel_details
         })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})

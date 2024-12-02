@@ -167,8 +167,8 @@ function Map() {
 
       const data = await response.json();
       if (data.success) {
-        const { orderedLocations } = data;
-        calculateTSPRoutes(orderedLocations);
+        const { orderedLocations, totalDistance, totalDuration } = data;
+        calculateTSPRoutes(orderedLocations, totalDistance, totalDuration);
       } else {
         alert("TSP calculation failed: " + data.message);
       }
