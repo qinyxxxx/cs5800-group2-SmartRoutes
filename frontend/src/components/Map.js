@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import loadGoogleMaps from "../loadGoogleMaps";
 import "../Map.css";
+import { ADDRESSES } from "../data/addresses.js";
 
 const FIX_START = "4 N 2nd St Suite 150, San Jose, CA 95113";
 
@@ -16,6 +17,10 @@ function Map() {
 
   const [totalDistance, setTotalDistance] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
+
+  const [activeButtonIds, setActiveButtonIds] = useState([]);
+
+
 
   useEffect(() => {
     const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
@@ -58,24 +63,46 @@ function Map() {
     }
   };
 
-  const submitLocations = () => {
-    locations.forEach((location) => {
-      if (location.trim() !== "" && geocoder) {
-        geocoder.geocode({ address: location }, (results, status) => {
-          if (status === "OK") {
-            const { lat, lng } = results[0].geometry.location;
-            new window.google.maps.Marker({
-              position: { lat: lat(), lng: lng() },
-              map: map,
-              title: location,
-            });
-          } else {
-            alert(`Geocoding failed for: ${location} with status: ${status}`);
-          }
-        });
-      }
-    });
+  // Button Location Selection
+  const handleLocationSelect = (id) => {
+    const newLocations = [...locations];
+    const activeIndex = activeButtonIds.length;
+    newLocations[activeIndex] = ADDRESSES[id].address;  
+    
+    setLocations(newLocations);
   };
+
+
+  const handleAdressButtonClick = (id) => {
+    setActiveButtonIds((prevIds) => {
+      if (!prevIds.includes(id)) {
+        return [...prevIds, id];
+      }
+      return prevIds;
+    });
+  
+    handleLocationSelect(id);
+  };
+  
+
+  // const submitLocations = () => {
+  //   locations.forEach((location) => {
+  //     if (location.trim() !== "" && geocoder) {
+  //       geocoder.geocode({ address: location }, (results, status) => {
+  //         if (status === "OK") {
+  //           const { lat, lng } = results[0].geometry.location;
+  //           new window.google.maps.Marker({
+  //             position: { lat: lat(), lng: lng() },
+  //             map: map,
+  //             title: location,
+  //           });
+  //         } else {
+  //           alert(`Geocoding failed for: ${location} with status: ${status}`);
+  //         }
+  //       });
+  //     }
+  //   });
+  // };
 
   // const calculateRoutes = () => {
   //   if (locations.length < 2) {
@@ -255,9 +282,23 @@ function Map() {
               )}
             </div>
         ))}
+
+        <div>
+          {ADDRESSES.map((address) => (
+            <button
+              key={address.id}
+              onClick={() => handleAdressButtonClick(address.id)}
+              className={activeButtonIds.includes(address.id) ? "active-button" : ""}
+            >
+              {address.name}
+            </button>
+          ))}
+        </div>
+
         {/*<button onClick={submitLocations}>Mark Locations on Map</button>*/}
-        <br/>
+        {/* <br/> */}
         {/*<button onClick={calculateRoutes}>Calculate Routes</button>*/}
+
         <div className="button-container">
           <button onClick={fetchTSPRouteGreedy}>Greedy TSP</button>
           <button onClick={fetchKruskalRoute}>Kruskal TSP</button>
@@ -276,8 +317,8 @@ function Map() {
             </div>
         )}
         <div>
-          <h3>Total Distance: {(totalDistance / 1000).toFixed(2)} KM</h3>
-          <h3>Total Duration: {(totalDuration / 60).toFixed(2)} Mins</h3>
+          <h3>Total Distance: {(totalDistance / 1000).toFixed(2)} km</h3>
+          <h3>Total Duration: {(totalDuration / 60).toFixed(2)} mins</h3>
       </div>
       </div>
   );
