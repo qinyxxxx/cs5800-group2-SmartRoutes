@@ -168,6 +168,11 @@ def kruskal_mst(distances):
             mst[u].append(v)
             mst[v].append(u)
 
+    # Print MST after it's constructed
+    print("MST from Kruskal's Algorithm (Edges):")
+    for node, neighbors in mst.items():
+        print(f"Node {node}: {neighbors}")
+
     return mst
 
 
@@ -255,21 +260,29 @@ def prim_mst(distances):
     # To store the MST
     mst = defaultdict(list)
     visited = [False] * n
-    min_heap = [(0, 0)]  # (weight, node), starting from node 0
+    min_heap = [(0, 0, -1)]  # (weight, node), starting from node 0
 
     while min_heap:
-        weight, u = heapq.heappop(min_heap)
+        weight, u, v = heapq.heappop(min_heap)
 
         if visited[u]:
             continue
         visited[u] = True
+        if v != -1:
+            mst[u].append(v)
+            mst[v].append(u)
 
         # Add the selected node to the MST
         for v in range(n):
             if not visited[v] and distances[u][v] > 0:  # Avoid self-loops
-                heapq.heappush(min_heap, (distances[u][v], v))
-                mst[u].append(v)
-                mst[v].append(u)
+                heapq.heappush(min_heap, (distances[u][v], v, u))
+                # mst[u].append(v)
+                # mst[v].append(u)
+
+    # Print MST after it's constructed
+    print("MST from Prim's Algorithm (Edges):")
+    for node, neighbors in mst.items():
+        print(f"Node {node}: {neighbors}")
 
     return mst
 
@@ -312,6 +325,9 @@ def calculate_tsp_prim():
             [row["elements"][i]["duration"]["value"] for i in range(len(row["elements"]))]
             for row in distance_matrix
         ]
+
+        print("Prim Distances:", distances)
+        print("Prim Durations:", durations)
 
         # Apply Prim's Algorithm to find the MST
         mst = prim_mst(distances)
