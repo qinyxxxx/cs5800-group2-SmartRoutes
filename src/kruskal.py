@@ -1,21 +1,18 @@
-
-import sys
-import os
 import numpy as np
 import math
+from collections import defaultdict
+import matplotlib.pyplot as plt
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.plot_kruskal import plot_tsp_with_arrows
-
-# Union-Find Data Structure for Kruskal's Algorithm
 class UnionFind:
     def __init__(self, n):
         self.parent = list(range(n))
         self.rank = [0] * n
+
     def find(self, u):
         if self.parent[u] != u:
-            self.parent[u] = self.find(self.parent[u])  
+            self.parent[u] = self.find(self.parent[u])
         return self.parent[u]
+
     def union(self, u, v):
         root_u = self.find(u)
         root_v = self.find(v)
@@ -30,72 +27,98 @@ class UnionFind:
             return True
         return False
 
-def read_coordinates(file_path):
-    """
-    Reads coordinates from a file and returns a list of points.
-    :param file_path: Path to the coordinates file
-    :return: List of (label, x, y)
-    """
+# Compute Euclidean Distance between two points
+def euclidean_distance(p1, p2):
+    return math.sqrt((p1[1] - p2[1]) ** 2 + (p1[2] - p2[2]) ** 2)
+
+# Kruskal Algorithm using the UnionFind class
+def kruskal_mst(distances):
+    n = len(distances)
+    edges = []
+
+    for i in range(n):
+        for j in range(i + 1, n):
+            edges.append((distances[i][j], i, j))
+
+    edges.sort(key=lambda x: x[0])
+
+    uf = UnionFind(n)
+    mst = defaultdict(list)
+
+    for weight, u, v in edges:
+        if uf.union(u, v):  
+            mst[u].append(v)
+            mst[v].append(u)
+
+    for node, neighbors in mst.items():
+        print(f"Node {node}: {neighbors}")
+
+    return mst
+
+
+def krustral_tsp(mst, start):
+    visited = set()
+    path = []
+
+    def dfs(node):
+        visited.add(node)
+        path.append(node)
+        for neighbor in mst[node]:
+            if neighbor not in visited:
+                dfs(neighbor)
+
+    dfs(start)
+    path.append(start)  
+    return path
+
+def read_points_from_file(filename):
     points = []
-    with open(file_path, 'r') as file:
+    with open(filename, "r") as file:
         for line in file:
             label, x, y = line.strip().split(',')
-            points.append((label, float(x), float(y)))
+            points.append((label, float(x), float(y)))  
     return points
 
-def calculate_distance_matrix(points):
-    """
-    Calculates the distance matrix between points based on their coordinates.
-    :param points: List of (label, x, y)
-    :return: List of edges as tuples (distance, node1, node2)
-    """
-    n = len(points)
-    edges = []
-    for i in range(n):
-        for j in range(i + 1, n):  
-            x1, y1 = points[i][1], points[i][2]
-            x2, y2 = points[j][1], points[j][2]
-            distance = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
-            edges.append((distance, i, j))
-    return edges
-
-def kruskal_mst(points, edges):
-    """
-    Solves the Minimum Spanning Tree (MST) using Kruskal's Algorithm.
-    :param points: List of (label, x, y)
-    :param edges: List of edges as tuples (distance, node1, node2)
-    :return: List of edges in the MST
-    """
-    edges.sort()  
-    uf = UnionFind(len(points))
-    mst = []
+def plot_tsp_with_arrows(locations, tsp_path):
+    labels, x_coords, y_coords = zip(*locations)
+    
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
     total_distance = 0
-    for edge in edges:
-        distance, u, v = edge
-        if uf.union(u, v):  
-            mst.append(edge)
-            total_distance += distance
-    return mst, total_distance
+    for i in range(len(tsp_path) - 1):
+        u = tsp_path[i]
+        v = tsp_path[i + 1]
+        ax.plot([x_coords[u], x_coords[v]], [y_coords[u], y_coords[v]], 'g-', alpha=0.7)
+        mid_x = (x_coords[u] + x_coords[v]) / 2
+        mid_y = (y_coords[u] + y_coords[v]) / 2
+        distance = euclidean_distance(locations[u], locations[v])
+        total_distance += distance
+        ax.text(mid_x, mid_y, f"{distance:.2f}", fontsize=10, ha='center', va='center')
+
+    ax.scatter(x_coords, y_coords, color='red')
+    for i, label in enumerate(labels):
+        ax.text(x_coords[i] + 0.1, y_coords[i] + 0.1, label, fontsize=12)
+
+    ax.set_title(f"TSP Path Visualization\nTotal Distance: {total_distance:.2f}")
+    
+    plt.show()
 
 def main():
-    # Read coordinates from the file
-    coordinates_file = "data/test_data.txt"
-    points = read_coordinates(coordinates_file)
-    
-    # Calculate the list of edges
-    edges = calculate_distance_matrix(points)
-    # Run Kruskal's algorithm to find the MST
-    mst, total_distance = kruskal_mst(points, edges)
-    # Output the MST edges and total weight
-    print("MST Edges:")
-    for edge in mst:
-        distance, u, v = edge
-        print(f"{points[u][0]} -- {points[v][0]} : {round(distance, 2)}")
-    print("Total weight of MST:", round(total_distance, 2))
-    # Plot the results
-    plot_tsp_with_arrows(points, mst, total_distance)
+    locations = read_points_from_file('data/test_data.txt')
+
+    n = len(locations)
+    distances = [[0] * n for _ in range(n)]
+    for i in range(n):
+        for j in range(i + 1, n):
+            dist = euclidean_distance(locations[i], locations[j])
+            distances[i][j] = dist
+            distances[j][i] = dist  
+
+    mst = kruskal_mst(distances)
+
+    tsp_path = krustral_tsp(mst, start=0)
+
+    plot_tsp_with_arrows(locations, tsp_path)
 
 if __name__ == "__main__":
     main()
-
-
