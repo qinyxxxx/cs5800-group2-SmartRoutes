@@ -50,26 +50,41 @@ def kruskal_mst(distances):
             mst[u].append(v)
             mst[v].append(u)
 
-    for node, neighbors in mst.items():
-        print(f"Node {node}: {neighbors}")
-
     return mst
 
+# DFS traversal of the MST to generate a path
+def dfs(mst, start, visited, path):
+    visited.add(start)
+    path.append(start)
+    for neighbor in mst[start]:
+        if neighbor not in visited:
+            dfs(mst, neighbor, visited, path)
 
+# Shortcutting to remove repeated cities and form a valid TSP cycle
+def shortcut(path):
+    visited = set()
+    new_path = []
+    for city in path:
+        if city not in visited:
+            new_path.append(city)
+            visited.add(city)
+    return new_path
+
+# TSP approximation using Kruskal's MST and DFS
 def krustral_tsp(mst, start):
     visited = set()
     path = []
-
-    def dfs(node):
-        visited.add(node)
-        path.append(node)
-        for neighbor in mst[node]:
-            if neighbor not in visited:
-                dfs(neighbor)
-
-    dfs(start)
-    path.append(start)  
-    return path
+    
+    # Perform DFS on MST
+    dfs(mst, start, visited, path)
+    
+    # Apply shortcutting to avoid repeated cities
+    tsp_path = shortcut(path)
+    
+    # Make the path circular (return to the start)
+    tsp_path.append(tsp_path[0])
+    
+    return tsp_path
 
 def read_points_from_file(filename):
     points = []

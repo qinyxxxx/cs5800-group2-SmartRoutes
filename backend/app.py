@@ -168,7 +168,6 @@ def kruskal_mst(distances):
             mst[u].append(v)
             mst[v].append(u)
 
-    # Print MST after it's constructed
     print("MST from Kruskal's Algorithm (Edges):")
     for node, neighbors in mst.items():
         print(f"Node {node}: {neighbors}")
@@ -176,20 +175,36 @@ def kruskal_mst(distances):
     return mst
 
 
+def dfs(mst, node, visited, path):
+    visited.add(node)
+    path.append(node)
+    for neighbor in mst[node]:
+        if neighbor not in visited:
+            dfs(mst, neighbor, visited, path)
+
+def shortcut(path):
+    visited = set()
+    new_path = []
+    for city in path:
+        if city not in visited:
+            new_path.append(city)
+            visited.add(city)
+    return new_path
+
 def krustral_tsp(mst, start):
     visited = set()
     path = []
-
-    def dfs(node):
-        visited.add(node)
-        path.append(node)
-        for neighbor in mst[node]:
-            if neighbor not in visited:
-                dfs(neighbor)
-
-    dfs(start)
-    path.append(start)  
-    return path
+    
+    # Perform DFS on the MST
+    dfs(mst, start, visited, path)
+    
+    # Apply shortcutting to avoid repeated cities
+    tsp_path = shortcut(path)
+    
+    # Make the path circular (return to the start)
+    tsp_path.append(tsp_path[0])
+    
+    return tsp_path
 
 @app.route("/kruskal", methods=["POST"])
 def calculate_tsp_kruskal():
@@ -197,6 +212,8 @@ def calculate_tsp_kruskal():
         data = request.get_json()
         locations = data.get("locations")
 
+        # Start point is fixed
+        FIX_START = locations[0]  
         if FIX_START not in locations:
             locations.insert(0, FIX_START)
 
@@ -213,10 +230,9 @@ def calculate_tsp_kruskal():
 
         mst = kruskal_mst(distances)
 
-        # Get path order
+        # Get TSP path from MST
         tsp_order = krustral_tsp(mst, 0)
 
-        # Transfer to the location order
         ordered_locations = [locations[i] for i in tsp_order]
 
         total_distance = sum(
@@ -252,6 +268,7 @@ def calculate_tsp_kruskal():
 
     except Exception as e:
         return jsonify({"success": False, "message": str(e)})
+
 
 
 #Prim's TSP algorithm
