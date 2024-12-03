@@ -94,6 +94,10 @@ def read_points_from_file(filename):
             points.append((label, float(x), float(y)))  
     return points
 
+
+def euclidean_distance(point1, point2):
+    return np.sqrt((point1[1] - point2[1])**2 + (point1[2] - point2[2])**2)
+
 def plot_tsp_with_arrows(locations, tsp_path):
     labels, x_coords, y_coords = zip(*locations)
     
@@ -103,7 +107,14 @@ def plot_tsp_with_arrows(locations, tsp_path):
     for i in range(len(tsp_path) - 1):
         u = tsp_path[i]
         v = tsp_path[i + 1]
+        
         ax.plot([x_coords[u], x_coords[v]], [y_coords[u], y_coords[v]], 'g-', alpha=0.7)
+        
+        ax.annotate("",
+                    xy=(x_coords[v], y_coords[v]),
+                    xytext=(x_coords[u], y_coords[u]),
+                    arrowprops=dict(arrowstyle="->", color='blue'))
+        
         mid_x = (x_coords[u] + x_coords[v]) / 2
         mid_y = (y_coords[u] + y_coords[v]) / 2
         distance = euclidean_distance(locations[u], locations[v])
@@ -111,11 +122,12 @@ def plot_tsp_with_arrows(locations, tsp_path):
         ax.text(mid_x, mid_y, f"{distance:.2f}", fontsize=10, ha='center', va='center')
 
     ax.scatter(x_coords, y_coords, color='red')
+    
     for i, label in enumerate(labels):
         ax.text(x_coords[i] + 0.1, y_coords[i] + 0.1, label, fontsize=12)
 
     ax.set_title(f"TSP Path Visualization\nTotal Distance: {total_distance:.2f}")
-    
+    ax.grid(True)
     plt.show()
 
 def main():
