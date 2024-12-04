@@ -83,64 +83,7 @@ function Map() {
   
     handleLocationSelect(id);
   };
-  
 
-  // const submitLocations = () => {
-  //   locations.forEach((location) => {
-  //     if (location.trim() !== "" && geocoder) {
-  //       geocoder.geocode({ address: location }, (results, status) => {
-  //         if (status === "OK") {
-  //           const { lat, lng } = results[0].geometry.location;
-  //           new window.google.maps.Marker({
-  //             position: { lat: lat(), lng: lng() },
-  //             map: map,
-  //             title: location,
-  //           });
-  //         } else {
-  //           alert(`Geocoding failed for: ${location} with status: ${status}`);
-  //         }
-  //       });
-  //     }
-  //   });
-  // };
-
-  // const calculateRoutes = () => {
-  //   if (locations.length < 2) {
-  //     alert("Please enter at least two locations.");
-  //     return;
-  //   }
-  //   const waypoints = locations.slice(1, -1).map((location) => ({ location, stopover: true }));
-  //   const origin = locations[0];
-  //   const destination = locations[locations.length - 1];
-
-  //   if (directionsService.current && directionsRenderer.current) {
-  //     directionsService.current.route(
-  //       {
-  //         origin,
-  //         destination,
-  //         waypoints,
-  //         travelMode: window.google.maps.TravelMode.DRIVING,
-  //       },
-  //       (response, status) => {
-  //         if (status === "OK") {
-  //           directionsRenderer.current.setDirections(response);
-
-  //           const legs = response.routes[0].legs;
-  //           const order = legs.map((leg, index) => ({
-  //             step: index + 1,
-  //             start: leg.start_address,
-  //             end: leg.end_address,
-  //           }));
-  //           setRouteOrder(order);
-  //         } else {
-  //           window.alert("Directions request failed due to " + status);
-  //         }
-  //       }
-  //     );
-  //   } else {
-  //     console.error("DirectionsService or DirectionsRenderer is not initialized.");
-  //   }
-  // };
 
   const fetchTSPRouteGreedy = async () => {
     if (locations.length < 2) {

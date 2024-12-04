@@ -130,7 +130,7 @@ def calculate_tsp():
 
 
 
-# Krustral Algorithm
+# Kruskal Algorithm
 def kruskal_mst(distances):
     n = len(distances)
     edges = []
@@ -191,7 +191,7 @@ def shortcut(path):
             visited.add(city)
     return new_path
 
-def krustral_tsp(mst, start):
+def kruskal_tsp(mst, start):
     visited = set()
     path = []
     
@@ -231,7 +231,7 @@ def calculate_tsp_kruskal():
         mst = kruskal_mst(distances)
 
         # Get TSP path from MST
-        tsp_order = krustral_tsp(mst, 0)
+        tsp_order = kruskal_tsp(mst, 0)
 
         ordered_locations = [locations[i] for i in tsp_order]
 
